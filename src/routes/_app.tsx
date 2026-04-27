@@ -1,11 +1,12 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
+import { AppLayout } from "@/components/app-layout";
 
-export const Route = createFileRoute("/")({
-  component: Index,
+export const Route = createFileRoute("/_app")({
+  component: AppGuard,
 });
 
-function Index() {
+function AppGuard() {
   const { session, loading } = useAuth();
   if (loading) {
     return (
@@ -14,5 +15,10 @@ function Index() {
       </div>
     );
   }
-  return <Navigate to={session ? "/dashboard" : "/login"} />;
+  if (!session) return <Navigate to="/login" />;
+  return (
+    <AppLayout>
+      <Outlet />
+    </AppLayout>
+  );
 }
