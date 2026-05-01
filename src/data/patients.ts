@@ -10,6 +10,8 @@ export interface Patient {
   condition: string;
   status: PatientStatus;
   doctor: string;
+  /** Attending of record; same as `doctor` in demo data — used for clinician RBAC scoping. */
+  assignedDoctor: string;
   department: string;
   admittedAt: string; // ISO
   lastVisit: string;
@@ -62,6 +64,7 @@ function generatePatients(count = 36): Patient[] {
     const lastVisit = new Date(Date.now() - lastVisitDays * 86400000).toISOString();
     const sys = 100 + Math.floor(rng() * 60);
     const dia = 60 + Math.floor(rng() * 30);
+    const doctor = pick(rng, DOCTORS);
     list.push({
       id: `PT-${(1000 + i).toString()}`,
       name: `${first} ${last}`,
@@ -70,7 +73,8 @@ function generatePatients(count = 36): Patient[] {
       bloodType: pick(rng, BLOOD),
       condition: pick(rng, CONDITIONS),
       status: pick(rng, STATUSES),
-      doctor: pick(rng, DOCTORS),
+      doctor,
+      assignedDoctor: doctor,
       department: pick(rng, DEPARTMENTS),
       admittedAt,
       lastVisit,

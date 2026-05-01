@@ -53,7 +53,11 @@ export const Route = createRootRoute({
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3a3dabb5-5a76-4fee-b283-372da3424d84/id-preview-400ff6e9--d37de33f-c4d2-4fd1-8d15-dbaaa66a4b1f.lovable.app-1777315645210.png" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/jpeg", href: "/ragaai.jpg" },
+      { rel: "apple-touch-icon", href: "/ragaai.jpg" },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,

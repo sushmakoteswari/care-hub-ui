@@ -1,47 +1,60 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useCallback, type ReactNode } from "react";
+import type { User } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { getFirebaseAuth } from "@/services/firebase";
+import { authService } from "@/services/authService";
+import { useAuthStore, type AuthRole } from "@/store/authStore";
+import { resolveAuthRole } from "@/lib/auth-role";
 
-interface AuthContextValue {
-  session: Session | null;
-  user: User | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+/** Shallow session shape for call sites that still expect `session`. */
+export type AuthSessionShim = {
+  user: User;
+} | null;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    // CRITICAL: subscribe BEFORE getSession to avoid missed events
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setLoading(false);
+    const auth = getFirebaseAuth();
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        let role: AuthRole = "clinician";
+        try {
+          const tr = await user.getIdTokenResult();
+          const r = tr.claims.role;
+          if (typeof r === "string") role = r as AuthRole;
+        } catch {
+          /* keep default */
+        }
+        role = resolveAuthRole(user, role);
+        useAuthStore.getState().setFromFirebase(user, role);
+      } else {
+        useAuthStore.getState().setFromFirebase(null, "clinician");
+      }
     });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
-    return () => sub.subscription.unsubscribe();
+    return unsub;
   }, []);
 
-  const value: AuthContextValue = {
-    session,
-    user: session?.user ?? null,
-    loading,
-    signOut: async () => {
-      await supabase.auth.signOut();
-    },
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return children;
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
+export function useAuth(): {
+  user: User | null;
+  role: AuthRole;
+  /** Prefer `user`; kept for routes that checked `session`. */
+  session: AuthSessionShim;
+  loading: boolean;
+  signOut: () => Promise<void>;
+} {
+  const user = useAuthStore((s) => s.user);
+  const role = useAuthStore((s) => s.role);
+  const loading = useAuthStore((s) => s.isLoading);
+
+  const signOut = useCallback(() => authService.signOut(), []);
+
+  return {
+    user,
+    role,
+    session: user ? { user } : null,
+    loading,
+    signOut,
+  };
 }

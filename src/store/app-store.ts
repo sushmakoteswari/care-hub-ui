@@ -11,6 +11,8 @@ interface AppState {
   patientSearch: string;
   patientStatusFilter: "all" | "stable" | "critical" | "monitoring" | "discharged";
   notificationsEnabled: boolean;
+  /** When set, patients list is restricted to these ids (AI smart filter). */
+  patientAiFilterIds: string[] | null;
 }
 
 const STORAGE_KEY = "medcare.app.state.v1";
@@ -20,6 +22,7 @@ const defaults: AppState = {
   patientSearch: "",
   patientStatusFilter: "all",
   notificationsEnabled: false,
+  patientAiFilterIds: null,
 };
 
 function load(): AppState {
@@ -58,7 +61,11 @@ export const appStore = {
     emit();
   },
   setPatientSearch(q: string) {
-    state = { ...state, patientSearch: q };
+    state = { ...state, patientSearch: q, patientAiFilterIds: null };
+    emit();
+  },
+  setPatientAiFilterIds(ids: string[] | null) {
+    state = { ...state, patientAiFilterIds: ids?.length ? [...ids] : null };
     emit();
   },
   setPatientStatusFilter(f: AppState["patientStatusFilter"]) {

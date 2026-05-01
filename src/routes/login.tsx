@@ -1,15 +1,16 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { FirebaseError } from "firebase/app";
+import { authService } from "@/services/authService";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { toast } from "sonner";
 import { Activity, ShieldCheck, Stethoscope } from "lucide-react";
+import { showNotification } from "@/lib/notifications";
+import { useNotificationCenterStore } from "@/store/notification-center-store";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -26,14 +27,40 @@ const credSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters").max(128),
 });
 
+function firebaseAuthMessage(err: unknown): string {
+  if (err instanceof FirebaseError) {
+    const messages: Record<string, string> = {
+      "auth/invalid-email": "Enter a valid email address.",
+      "auth/invalid-credential": "Invalid email or password.",
+      "auth/user-not-found": "Invalid email or password.",
+      "auth/wrong-password": "Invalid email or password.",
+      "auth/invalid-login-credentials": "Invalid email or password.",
+      "auth/too-many-requests": "Too many attempts. Try again later.",
+      "auth/popup-closed-by-user": "Sign-in was cancelled.",
+      "auth/popup-blocked": "Pop-up was blocked. Allow pop-ups for this site and try again.",
+      "auth/cancelled-popup-request": "Only one sign-in window at a time. Try again.",
+      "auth/network-request-failed": "Network error. Check your connection.",
+      "auth/operation-not-allowed": "This sign-in method is disabled in Firebase Console.",
+      "auth/invalid-api-key": "App configuration error. Check Firebase API key in .env.",
+      "auth/user-disabled": "This account has been disabled.",
+      "auth/user-token-expired": "Session expired. Sign in again.",
+      "auth/requires-recent-login": "For security, sign out and sign in again.",
+      "auth/account-exists-with-different-credential":
+        "An account already exists with this email using a different sign-in method.",
+    };
+    return messages[err.code] ?? err.message;
+  }
+  return err instanceof Error ? err.message : "Authentication failed";
+}
+
 function LoginPage() {
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && session) navigate({ to: "/dashboard" });
@@ -49,28 +76,12 @@ function LoginPage() {
     }
     setSubmitting(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email: parsed.data.email,
-          password: parsed.data.password,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (error) throw error;
-        toast.success("Account created", {
-          description: "Check your inbox to confirm your email, then sign in.",
-        });
-        setMode("signin");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: parsed.data.email,
-          password: parsed.data.password,
-        });
-        if (error) throw error;
-        toast.success("Welcome back");
-      }
+      const cred = await authService.signInWithEmail(parsed.data.email, parsed.data.password);
+      const addr = cred.user.email ?? parsed.data.email;
+      useNotificationCenterStore.getState().appendLogin(addr);
+      void showNotification("Signed in", { body: `Welcome back — ${addr}.` });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Authentication failed";
-      setError(msg);
+      setError(firebaseAuthMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -78,19 +89,26 @@ function LoginPage() {
 
   const handleGoogle = async () => {
     setError(null);
+    setGoogleLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (result.error) {
-        setError(result.error.message ?? "Google sign-in failed");
-        return;
-      }
-      if (result.redirected) return;
+      const cred = await authService.signInWithGoogle();
+      const addr = cred.user.email ?? "Google user";
+      useNotificationCenterStore.getState().appendLogin(addr);
+      void showNotification("Signed in", { body: `Welcome back ${addr}.` });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Google sign-in failed");
+      setError(firebaseAuthMessage(err));
+    } finally {
+      setGoogleLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
@@ -138,12 +156,10 @@ function LoginPage() {
             <span className="font-semibold">MedCare</span>
           </div>
           <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-            {mode === "signin" ? "Sign in to your account" : "Create your account"}
+            Sign in to your account
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signin"
-              ? "Welcome back. Enter your details to continue."
-              : "Get started with MedCare in under a minute."}
+            Welcome back. Enter your details to continue.
           </p>
 
           <Card className="mt-6 p-6">
@@ -151,6 +167,7 @@ function LoginPage() {
               type="button"
               variant="outline"
               className="w-full"
+              disabled={submitting || googleLoading}
               onClick={handleGoogle}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden>
@@ -159,7 +176,7 @@ function LoginPage() {
                 <path fill="#FBBC05" d="M5.86 14.12c-.22-.66-.35-1.36-.35-2.12s.13-1.46.35-2.12V7.04H2.18A10.99 10.99 0 0 0 1 12c0 1.78.43 3.46 1.18 4.96l3.68-2.84z" />
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.04l3.68 2.84C6.72 7.31 9.14 5.38 12 5.38z" />
               </svg>
-              Continue with Google
+              {googleLoading ? "Opening Google…" : "Continue with Google"}
             </Button>
 
             <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
@@ -186,67 +203,65 @@ function LoginPage() {
                 <Input
                   id="password"
                   type="password"
-                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
+              {(import.meta.env.DEV ||
+                import.meta.env.VITE_SHOW_LOGIN_DEMO_FILL === "true") && (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="min-w-0 flex-1"
+                    disabled={submitting || googleLoading}
+                    aria-label="Fill admin@careiq.dev and password for local testing"
+                    onClick={() => {
+                      setEmail("admin@careiq.dev");
+                      setPassword("Admin@123");
+                      setError(null);
+                    }}
+                  >
+                    Fill admin
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="min-w-0 flex-1"
+                    disabled={submitting || googleLoading}
+                    aria-label="Fill clinician@careiq.dev and password for local testing"
+                    onClick={() => {
+                      setEmail("clinician@careiq.dev");
+                      setPassword("Clinic@123");
+                      setError(null);
+                    }}
+                  >
+                    Fill clinician
+                  </Button>
+                </div>
+              )}
               {error && (
                 <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                   {error}
                 </div>
               )}
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting
-                  ? "Please wait…"
-                  : mode === "signin"
-                    ? "Sign in"
-                    : "Create account"}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={submitting || googleLoading}
+              >
+                {submitting ? "Please wait…" : "Sign in"}
               </Button>
             </form>
-
-            <div className="mt-5 text-center text-xs text-muted-foreground">
-              {mode === "signin" ? (
-                <>
-                  Don't have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode("signup");
-                      setError(null);
-                    }}
-                    className="font-medium text-accent hover:underline"
-                  >
-                    Sign up
-                  </button>
-                </>
-              ) : (
-                <>
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode("signin");
-                      setError(null);
-                    }}
-                    className="font-medium text-accent hover:underline"
-                  >
-                    Sign in
-                  </button>
-                </>
-              )}
-            </div>
           </Card>
 
           <p className="mt-6 text-center text-[11px] text-muted-foreground">
             By continuing you agree to MedCare's Terms & Privacy Policy.
-          </p>
-          <p className="mt-2 text-center text-[11px] text-muted-foreground">
-            <Link to="/" className="hover:underline">
-              ← Back to home
-            </Link>
           </p>
         </div>
       </div>

@@ -1,18 +1,9 @@
 /**
- * Notification helper — uses the browser Notification API for in-app/local
- * notifications (works in preview), and registers a service worker only on
- * production hosts (skips Lovable preview iframe).
+ * Browser notifications + optional service worker (`/sw.js`).
+ * SW registers on production hosts, or on localhost when
+ * `VITE_REGISTER_SERVICE_WORKER=true`. Skips iframes and Lovable preview hosts.
  */
 import { toast } from "sonner";
-
-export function isProdHost(): boolean {
-  if (typeof window === "undefined") return false;
-  const h = window.location.hostname;
-  if (h.includes("id-preview--")) return false;
-  if (h.includes("lovableproject.com")) return false;
-  if (h === "localhost" || h === "127.0.0.1") return false;
-  return true;
-}
 
 function inIframe(): boolean {
   try {
@@ -20,6 +11,27 @@ function inIframe(): boolean {
   } catch {
     return true;
   }
+}
+
+function isPreviewHost(): boolean {
+  const h = window.location.hostname;
+  return h.includes("id-preview--") || h.includes("lovableproject.com");
+}
+
+function isLocalhost(): boolean {
+  const h = window.location.hostname;
+  return h === "localhost" || h === "127.0.0.1";
+}
+
+/** True when we should register `/sw.js` (not when we should only unregister). */
+export function shouldRegisterServiceWorker(): boolean {
+  if (typeof window === "undefined") return false;
+  if (inIframe()) return false;
+  if (isPreviewHost()) return false;
+  if (isLocalhost()) {
+    return import.meta.env.VITE_REGISTER_SERVICE_WORKER === "true";
+  }
+  return true;
 }
 
 export async function requestPermission(): Promise<NotificationPermission> {
@@ -31,18 +43,16 @@ export async function requestPermission(): Promise<NotificationPermission> {
 }
 
 export async function showNotification(title: string, opts?: NotificationOptions) {
-  // Always show an in-app toast as a guaranteed fallback
   toast(title, { description: opts?.body });
 
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
 
-  // Prefer service worker registration when available (richer features)
   if ("serviceWorker" in navigator) {
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       if (reg) {
-        await reg.showNotification(title, { icon: "/favicon.ico", badge: "/favicon.ico", ...opts });
+        await reg.showNotification(title, { icon: "/ragaai.jpg", badge: "/ragaai.jpg", ...opts });
         return;
       }
     } catch {
@@ -50,20 +60,20 @@ export async function showNotification(title: string, opts?: NotificationOptions
     }
   }
   try {
-    new Notification(title, { icon: "/favicon.ico", ...opts });
+    new Notification(title, { icon: "/ragaai.jpg", ...opts });
   } catch {
     // ignore
   }
 }
 
 /**
- * Register the service worker — but ONLY on production hosts and outside iframes.
- * In preview/iframe we proactively unregister any leftover SW to avoid stale caches.
+ * Register the service worker when `shouldRegisterServiceWorker()` is true; otherwise
+ * unregister any existing registrations (avoids stale caches in dev/preview).
  */
 export async function registerServiceWorker() {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
-  if (!isProdHost() || inIframe()) {
+  if (!shouldRegisterServiceWorker()) {
     try {
       const regs = await navigator.serviceWorker.getRegistrations();
       for (const r of regs) await r.unregister();

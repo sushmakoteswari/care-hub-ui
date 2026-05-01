@@ -1,9 +1,16 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, Navigate } from "@tanstack/react-router";
+import { ShimmerBox, useInitialPageShimmer } from "@/components/page-shimmer";
 import { getPatientById } from "@/data/patients";
+import { useAuth } from "@/lib/auth-context";
+import { canAccessPatientRecord } from "@/lib/patient-access";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useGlobalStore } from "@/store/global-store";
+import { maskEmail, maskName, maskPhone } from "@/lib/phi-format";
+import { computeDemoRiskScore, riskLevel } from "@/lib/risk-score";
+import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   Bell,
@@ -28,9 +35,7 @@ export const Route = createFileRoute("/_app/patients/$patientId")({
   head: ({ loaderData }) => ({
     meta: [
       {
-        title: loaderData
-          ? `${loaderData.patient.name} — Patient — MedCare`
-          : "Patient — MedCare",
+        title: loaderData ? `${loaderData.patient.name} — Patient — MedCare` : "Patient — MedCare",
       },
     ],
   }),
@@ -47,6 +52,23 @@ export const Route = createFileRoute("/_app/patients/$patientId")({
 
 function PatientDetailPage() {
   const { patient } = Route.useLoaderData();
+  const { user, role } = useAuth();
+  const phiMask = useGlobalStore((s) => s.phiMaskEnabled);
+  const showShimmer = useInitialPageShimmer();
+
+  if (showShimmer) {
+    return <PatientDetailShimmer />;
+  }
+
+  if (!canAccessPatientRecord(patient, role, user?.email)) {
+    return <Navigate to="/patients" />;
+  }
+
+  const riskScore = computeDemoRiskScore(patient);
+  const rLevel = riskLevel(riskScore);
+  const barClass =
+    rLevel === "high" ? "bg-destructive" : rLevel === "moderate" ? "bg-warning" : "bg-success";
+
   const initials = patient.name
     .split(" ")
     .slice(0, 2)
@@ -79,7 +101,7 @@ function PatientDetailPage() {
             <div className="md:pb-2">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                  {patient.name}
+                  {phiMask ? maskName(patient.name) : patient.name}
                 </h1>
                 <StatusBadge status={patient.status} />
               </div>
@@ -104,6 +126,42 @@ function PatientDetailPage() {
             </Button>
           </div>
         </div>
+      </Card>
+
+      {/* Acuity risk */}
+      <Card className="p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-semibold text-foreground">Acuity risk score</h2>
+            <p className="text-xs text-muted-foreground">
+              Demo model from status + vitals (not a clinical device)
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-3xl font-semibold tabular-nums text-foreground">{riskScore}</span>
+            <span className="text-sm text-muted-foreground"> / 99</span>
+            <p
+              className={cn(
+                "mt-1 text-xs font-medium capitalize",
+                rLevel === "high" && "text-destructive",
+                rLevel === "moderate" && "text-warning-foreground",
+                rLevel === "low" && "text-success",
+              )}
+            >
+              {rLevel} risk
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn("h-full rounded-full transition-all", barClass)}
+            style={{ width: `${riskScore}%` }}
+          />
+        </div>
+        <p className="mt-4 text-xs text-muted-foreground">
+          Use the <strong className="text-foreground">clinical assistant</strong> (sparkles icon, bottom-right)
+          for an AI explanation of risk or a SOAP-style summary — powered by Groq on the server.
+        </p>
       </Card>
 
       {/* Vitals */}
@@ -170,9 +228,9 @@ function PatientDetailPage() {
             <Field label="Blood type" value={patient.bloodType} />
           </dl>
           <div className="mt-6 rounded-lg border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
-            <strong className="text-foreground">Care notes:</strong> Continue current
-            treatment plan. Re-evaluate vitals every 4 hours. Notify the on-call
-            physician if SpO₂ drops below 92% or HR exceeds 110 bpm sustained.
+            <strong className="text-foreground">Care notes:</strong> Continue current treatment
+            plan. Re-evaluate vitals every 4 hours. Notify the on-call physician if SpO₂ drops below
+            92% or HR exceeds 110 bpm sustained.
           </div>
         </Card>
 
@@ -180,8 +238,8 @@ function PatientDetailPage() {
         <Card className="p-6">
           <h2 className="font-semibold text-foreground">Contact</h2>
           <ul className="mt-4 space-y-3 text-sm">
-            <ContactRow icon={Mail} label={patient.email} />
-            <ContactRow icon={Phone} label={patient.phone} />
+            <ContactRow icon={Mail} label={phiMask ? maskEmail(patient.email) : patient.email} />
+            <ContactRow icon={Phone} label={phiMask ? maskPhone(patient.phone) : patient.phone} />
             <ContactRow icon={MapPin} label={patient.city} />
             <ContactRow
               icon={Calendar}
@@ -194,12 +252,80 @@ function PatientDetailPage() {
   );
 }
 
+function PatientDetailShimmer() {
+  return (
+    <div
+      className="mx-auto max-w-6xl space-y-6"
+      aria-busy="true"
+      aria-label="Loading patient record"
+    >
+      <ShimmerBox className="h-9 w-36" />
+      <Card className="overflow-hidden p-0">
+        <ShimmerBox className="h-28 w-full rounded-none rounded-t-lg" />
+        <div className="-mt-12 flex flex-col gap-6 px-6 pb-6 md:flex-row md:items-end">
+          <ShimmerBox className="h-24 w-24 shrink-0 rounded-full border-4 border-card" />
+          <div className="min-w-0 flex-1 space-y-3 md:pb-2">
+            <ShimmerBox className="h-8 w-64 max-w-full" />
+            <ShimmerBox className="h-4 w-48 max-w-full" />
+          </div>
+          <div className="flex gap-2">
+            <ShimmerBox className="h-10 w-32" />
+            <ShimmerBox className="h-10 w-28" />
+          </div>
+        </div>
+      </Card>
+      <Card className="p-6">
+        <div className="flex flex-wrap justify-between gap-4">
+          <ShimmerBox className="h-6 w-48" />
+          <ShimmerBox className="h-10 w-24" />
+        </div>
+        <ShimmerBox className="mt-4 h-3 w-full rounded-full" />
+      </Card>
+      <div>
+        <ShimmerBox className="mb-3 h-4 w-32" />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Card key={i} className="p-5">
+              <ShimmerBox className="h-9 w-9 rounded-lg" />
+              <ShimmerBox className="mt-3 h-3 w-20" />
+              <ShimmerBox className="mt-2 h-8 w-16" />
+            </Card>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="p-6 lg:col-span-2">
+          <ShimmerBox className="h-6 w-48" />
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="space-y-2">
+                <ShimmerBox className="h-3 w-24" />
+                <ShimmerBox className="h-4 w-full" />
+              </div>
+            ))}
+          </div>
+          <ShimmerBox className="mt-6 h-20 w-full rounded-lg" />
+        </Card>
+        <Card className="p-6">
+          <ShimmerBox className="h-6 w-32" />
+          <div className="mt-4 space-y-3">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <ShimmerBox className="h-8 w-8 rounded-md" />
+                <ShimmerBox className="h-4 flex-1" />
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </dt>
+      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd className="mt-1 font-medium text-foreground">{value}</dd>
     </div>
   );
