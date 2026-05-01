@@ -8,6 +8,7 @@
 🏥 **[Live Demo →](https://care-hub-ui.vercel.app)** &nbsp;&nbsp;|&nbsp;&nbsp; 📁 **[GitHub →](https://github.com/sushmakoteswari/care-hub-ui)**
 
 </div>
+<img width="1433" height="899" alt="image" src="https://github.com/user-attachments/assets/591f035d-f2ac-492c-bd71-39e2ecd2b300" />
 
 ---
 
