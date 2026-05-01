@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_app/patients")({
     return {};
   },
   head: () => ({
-    meta: [{ title: "Patients — MedCare" }],
+    meta: [{ title: "Patients - MedCare" }],
   }),
   component: PatientsPage,
 });
@@ -125,7 +125,7 @@ function PatientsPage() {
         </div>
       </div>
 
-      {/* Toolbar — stacked on mobile so nothing forces horizontal scroll */}
+      {/* Toolbar - stacked on mobile so nothing forces horizontal scroll */}
       <Card className="flex w-full max-w-full flex-col gap-3 overflow-hidden p-4 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="relative min-w-0 flex-1 basis-full sm:basis-[220px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

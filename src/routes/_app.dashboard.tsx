@@ -23,7 +23,7 @@ import { ShimmerBox, useInitialPageShimmer } from "@/components/page-shimmer";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
-    meta: [{ title: "Dashboard — MedCare" }],
+    meta: [{ title: "Dashboard - MedCare" }],
   }),
   component: DashboardPage,
 });
@@ -77,7 +77,7 @@ function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI cards — status tallies match Analytics → Status mix (same census source) */}
+      {/* KPI cards - status tallies match Analytics → Status mix (same census source) */}
       <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
         <KpiCard
           label="Total patients"

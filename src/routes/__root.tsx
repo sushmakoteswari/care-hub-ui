@@ -33,19 +33,19 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "MedCare — B2B Healthcare Platform" },
+      { title: "MedCare - B2B Healthcare Platform" },
       {
         name: "description",
         content:
           "MedCare is a clinical SaaS for hospitals: patient records, real-time analytics, and care coordination.",
       },
-      { property: "og:title", content: "MedCare — B2B Healthcare Platform" },
+      { property: "og:title", content: "MedCare - B2B Healthcare Platform" },
       {
         property: "og:description",
         content: "Clinical SaaS for modern hospitals.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:title", content: "MedCare — B2B Healthcare Platform" },
+      { name: "twitter:title", content: "MedCare - B2B Healthcare Platform" },
       { name: "description", content: "A B2B healthcare SaaS UI application for managing patient data and analytics." },
       { property: "og:description", content: "A B2B healthcare SaaS UI application for managing patient data and analytics." },
       { name: "twitter:description", content: "A B2B healthcare SaaS UI application for managing patient data and analytics." },

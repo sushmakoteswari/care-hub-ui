@@ -15,7 +15,7 @@ import { Shield } from "lucide-react";
 
 export const Route = createFileRoute("/_app/audit-log")({
   head: () => ({
-    meta: [{ title: "Audit log — MedCare" }],
+    meta: [{ title: "Audit log - MedCare" }],
   }),
   component: AuditLogPage,
 });
@@ -39,7 +39,7 @@ function AuditLogPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Audit log</h1>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Administrator-only view. Mock data for demo and UX review — not sourced from a live audit
+          Administrator-only view. Mock data for demo and UX review; not sourced from a live audit
           API.
         </p>
       </div>

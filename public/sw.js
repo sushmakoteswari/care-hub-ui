@@ -1,4 +1,4 @@
-// MedCare service worker — production only.
+// MedCare service worker - production only.
 // Intentionally minimal: handles notification events. We do NOT cache navigation
 // requests to avoid serving stale builds.
 

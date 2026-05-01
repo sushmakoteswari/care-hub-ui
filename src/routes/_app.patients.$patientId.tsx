@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_app/patients/$patientId")({
   head: ({ loaderData }) => ({
     meta: [
       {
-        title: loaderData ? `${loaderData.patient.name} — Patient — MedCare` : "Patient — MedCare",
+        title: loaderData ? `${loaderData.patient.name} - Patient - MedCare` : "Patient - MedCare",
       },
     ],
   }),
@@ -160,7 +160,7 @@ function PatientDetailPage() {
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
           Use the <strong className="text-foreground">clinical assistant</strong> (sparkles icon, bottom-right)
-          for an AI explanation of risk or a SOAP-style summary — powered by Groq on the server.
+          for an AI explanation of risk or a SOAP-style summary, powered by Groq on the server.
         </p>
       </Card>
 

@@ -28,7 +28,7 @@ function daysAdmitted(admittedAt: string): number {
 }
 
 function topEntry(map: Map<string, number>): string {
-  let best = "—";
+  let best = "";
   let n = 0;
   for (const [k, v] of map) {
     if (v > n) {
@@ -36,7 +36,7 @@ function topEntry(map: Map<string, number>): string {
       best = k;
     }
   }
-  return n ? best : "—";
+  return n > 0 ? best : "None";
 }
 
 export async function fetchWardInsight(cohort: Patient[]): Promise<string> {

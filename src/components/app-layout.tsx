@@ -233,7 +233,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         ) : null}
       </aside>
 
-      {/* Main column: canvas + floated navbar — no right padding so the main scrollbar sits flush with the viewport */}
+      {/* Main column: canvas + floated navbar - no right padding so the main scrollbar sits flush with the viewport */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pt-3 pb-3 pl-3 md:pt-4 md:pb-4 md:pl-2 pr-0">
         <header className="z-40 mr-3 flex min-h-14 shrink-0 items-center justify-between gap-3 rounded-2xl border border-border/40 bg-white/92 px-4 py-2.5 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.18),0_2px_8px_-4px_rgba(15,23,42,0.08)] backdrop-blur-xl md:mr-5 md:min-h-[3.75rem] md:px-6 dark:border-border/50 dark:bg-card/92 dark:shadow-[0_8px_32px_-12px_rgba(0,0,0,0.45)]">
           <div
@@ -330,7 +330,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </main>
       </div>
 
-      {/* Mobile bottom nav: equal flex columns, no min-width — avoids sideways scroll on Patients and other routes */}
+      {/* Mobile bottom nav: equal flex columns, no min-width - avoids sideways scroll on Patients and other routes */}
       <nav
         aria-label="Main navigation"
         className="fixed bottom-0 left-0 right-0 z-30 flex w-full max-w-[100vw] gap-0 border-t border-border bg-background/95 pb-[max(0.375rem,env(safe-area-inset-bottom,0px))] pt-1 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 md:hidden"

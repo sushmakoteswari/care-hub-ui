@@ -39,7 +39,7 @@
 }
 
 /*
- * Clinical Trust palette — calm medical blues, crisp whites.
+ * Clinical Trust palette - calm medical blues, crisp whites.
  * Brand accent #3c83f6; deep navy #0c2340
  */
 :root {
@@ -85,7 +85,7 @@
   --input: oklch(0.92 0.012 220);
   --ring: var(--brand-oklch);
 
-  /* Chart palette — brand blue + supporting */
+  /* Chart palette - brand blue + supporting */
   --chart-1: var(--brand-oklch);
   --chart-2: var(--brand-muted-oklch);
   --chart-3: oklch(0.4 0.07 250);
@@ -131,6 +131,36 @@
   }
 }
 
+@keyframes login-orb-drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(5%, -7%, 0) scale(1.05);
+  }
+}
+
+@keyframes login-orb-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-6%, 6%, 0) scale(0.96);
+  }
+}
+
+@keyframes login-orb-drift-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(4%, 9%, 0);
+  }
+}
+
 @layer utilities {
   .dashboard-shimmer {
     background: linear-gradient(
@@ -149,6 +179,31 @@
     .dashboard-shimmer {
       animation: none;
       background: var(--muted);
+    }
+  }
+
+  .login-orb-drift-a {
+    animation: login-orb-drift-a 17s ease-in-out infinite;
+  }
+
+  .login-orb-drift-b {
+    animation: login-orb-drift-b 22s ease-in-out infinite;
+  }
+
+  .login-orb-drift-c {
+    animation: login-orb-drift-c 14s ease-in-out infinite;
+  }
+
+  .login-orb-drift-a-rev {
+    animation: login-orb-drift-a 26s ease-in-out infinite reverse;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .login-orb-drift-a,
+    .login-orb-drift-b,
+    .login-orb-drift-c,
+    .login-orb-drift-a-rev {
+      animation: none;
     }
   }
 }

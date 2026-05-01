@@ -14,7 +14,7 @@ import {
 
 export const Route = createFileRoute("/_app/notifications")({
   head: () => ({
-    meta: [{ title: "Notifications — MedCare" }],
+    meta: [{ title: "Notifications - MedCare" }],
   }),
   component: NotificationsPage,
 });

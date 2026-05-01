@@ -51,7 +51,7 @@ const chartTooltip = {
 
 export const Route = createFileRoute("/_app/analytics")({
   head: () => ({
-    meta: [{ title: "Analytics — MedCare" }],
+    meta: [{ title: "Analytics - MedCare" }],
   }),
   component: AnalyticsPage,
 });
@@ -337,7 +337,7 @@ function AnalyticsPage() {
             <span className="font-medium text-foreground">How to read:</span> each month has two
             bars. The <span className="text-foreground">purple</span> bar is simulated denial %{" "}
             <em>before</em> AI assistance; the <span className="text-foreground">green</span> bar is{" "}
-            <em>after</em>. Lower is better — the gap shows the lift from AI (demo data, not live
+            <em>after</em>. Lower is better; the gap shows the lift from AI (demo data, not live
             claims).
           </p>
         </div>
@@ -396,7 +396,7 @@ function AnalyticsPage() {
           </ResponsiveContainer>
         </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
-          Illustrative operational metrics for stakeholder demos — not tied to live claims data.
+          Illustrative operational metrics for stakeholder demos; not tied to live claims data.
         </p>
       </Card>
 
@@ -459,7 +459,7 @@ function AnalyticsPage() {
           <div>
             <h2 className="font-semibold text-foreground">Physician workload</h2>
             <p className="text-xs text-muted-foreground">
-              Patient load per attending — critical cases highlighted
+              Patient load per attending; critical cases highlighted
             </p>
           </div>
           <div className="mt-4 h-72">
@@ -574,7 +574,7 @@ function AnalyticsPage() {
             </ResponsiveContainer>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            Illustrative trend aligned with RagaAI-style evaluation — demo dataset.
+            Illustrative trend aligned with RagaAI-style evaluation (demo dataset).
           </p>
         </Card>
 
@@ -582,7 +582,7 @@ function AnalyticsPage() {
           <div>
             <h2 className="font-semibold text-foreground">Patient Risk Trend</h2>
             <p className="text-xs text-muted-foreground">
-              Stacked population strata — month over month
+              Stacked population strata, month over month
             </p>
           </div>
           <div className="mt-4 h-80">
@@ -653,7 +653,7 @@ function AnalyticsPage() {
             </ResponsiveContainer>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            Demo cohort — not derived from live risk models.
+            Demo cohort; not derived from live risk models.
           </p>
         </Card>
       </div>

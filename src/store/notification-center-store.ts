@@ -29,7 +29,7 @@ function seedDemo(): NotificationRow[] {
     },
     {
       id: "seed-2",
-      title: "Lab results — your patients",
+      title: "Lab results for your patients",
       body: "New chemistry for Arjun Brown (PT-1004) and Ethan Davis (PT-1006). Review in chart.",
       createdAt: new Date(now - 86_400_000).toISOString(),
       read: true,

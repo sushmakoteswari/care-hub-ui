@@ -10,7 +10,7 @@ export interface Patient {
   condition: string;
   status: PatientStatus;
   doctor: string;
-  /** Attending of record; same as `doctor` in demo data — used for clinician RBAC scoping. */
+  /** Attending of record; same as `doctor` in demo data - used for clinician RBAC scoping. */
   assignedDoctor: string;
   department: string;
   admittedAt: string; // ISO
