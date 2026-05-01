@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Activity, BarChart3, Building2, ShieldCheck, Users } from "lucide-react";
-import { showNotification } from "@/lib/notifications";
+import { promptNotificationPermissionAfterLogin, showNotification } from "@/lib/notifications";
 import { useNotificationCenterStore } from "@/store/notification-center-store";
 import { ShimmerBox } from "@/components/page-shimmer";
 import { cn } from "@/lib/utils";
@@ -154,6 +154,7 @@ function LoginPage() {
       const addr = cred.user.email ?? parsed.data.email;
       useNotificationCenterStore.getState().appendLogin(addr);
       void showNotification("Signed in", { body: `Welcome back, ${addr}.` });
+      void promptNotificationPermissionAfterLogin();
     } catch (err) {
       setError(firebaseAuthMessage(err));
     } finally {
@@ -169,6 +170,7 @@ function LoginPage() {
       const addr = cred.user.email ?? "Google user";
       useNotificationCenterStore.getState().appendLogin(addr);
       void showNotification("Signed in", { body: `Welcome back ${addr}.` });
+      void promptNotificationPermissionAfterLogin();
     } catch (err) {
       setError(firebaseAuthMessage(err));
     } finally {

@@ -4,6 +4,7 @@
  * `VITE_REGISTER_SERVICE_WORKER=true`. Skips iframes and Lovable preview hosts.
  */
 import { toast } from "sonner";
+import { appStore } from "@/store/app-store";
 
 function inIframe(): boolean {
   try {
@@ -40,6 +41,21 @@ export async function requestPermission(): Promise<NotificationPermission> {
     return Notification.permission;
   }
   return await Notification.requestPermission();
+}
+
+/**
+ * After successful sign-in: sync in-app pref if already allowed; otherwise prompt once (default).
+ * Skips when permission was permanently denied. Call from login while still tied to user gesture when possible.
+ */
+export async function promptNotificationPermissionAfterLogin(): Promise<void> {
+  if (typeof window === "undefined" || !("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    appStore.setNotificationsEnabled(true);
+    return;
+  }
+  if (Notification.permission === "denied") return;
+  const perm = await requestPermission();
+  if (perm === "granted") appStore.setNotificationsEnabled(true);
 }
 
 export async function showNotification(title: string, opts?: NotificationOptions) {
